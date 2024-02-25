@@ -28,7 +28,6 @@ import numpy as np
 
 
 def circlesCreate(radius, n):
-
     theta = np.linspace(0, 2 * np.pi, n)  # à modifier !
     x = np.cos(theta) * radius
     y = np.sin(theta) * radius
@@ -60,7 +59,6 @@ def circlesAngles(ratio):
 
 
 def circlesAnimate(theta, x_rolling, y_rolling, ratio):
-
     x = (
         (ratio + 1) * np.cos(theta)
         + x_rolling * np.cos(theta * (ratio + 1))
@@ -83,7 +81,6 @@ def circlesAnimate(theta, x_rolling, y_rolling, ratio):
 
 
 def main():
-
     #
     # -2- Paramètres du problème
     #     ratio : rapport entre le rayon du cercle intérieur et le rayon du cercle extérieur
@@ -147,7 +144,6 @@ def main():
     #
 
     def animate(i):
-
         [x, y] = circlesAnimate(theta_inner[i], x_rolling, y_rolling, ratio)
 
         x_left[i] = x[0]
