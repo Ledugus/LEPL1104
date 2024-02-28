@@ -14,7 +14,7 @@
 import matplotlib
 from matplotlib import pyplot as plt
 from numpy import *
-from splineTest import spline
+from devoir2_spline import spline
 
 # ====================== callback pour les événements avec la souris ======
 #

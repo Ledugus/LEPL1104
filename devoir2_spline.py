@@ -19,92 +19,34 @@ from numpy.linalg import solve
 # FONCTIONS A MODIFIER [begin]
 #
 #
-def get_ddU(U, h):
-    n = len(U)
-    A = np.zeros((n, n))
-    b = np.zeros(n)
-    k = (h**2) / 6
-    for i in range(n):
-        b[i] = U[i - 1] - 2 * U[i] + U[(i + 1) % n]
-        A[i][i - 1] = 1
-        A[i][i] = 4
-        A[i][(i + 1) % n] = 1
-    return solve(A, b) / k
 
 
 def spline(x, h, U):
-    print(
-        """
-
-
-    New spline :"""
-    )
-    U = np.append(U, U[0])
     n = np.size(U)
     X = np.arange(0, n + 1) * h
     i = np.searchsorted(X[1:], x)
-    X = X[:-1]
 
-    d = np.full(n, 4)  # vecteur rempli de 4
+    d = np.full(n, 4)
     A = np.diag(d) + np.diag(np.ones(n - 1), -1) + np.diag(np.ones(n - 1), 1)
-    A[-1, 1] = 1
+    A[-1, 0] = 1
     A[0, -1] = 1
-    A[0, 0] = 4
-    A[0, 1] = 1
-    b = U[range(-1, n - 1)] - 2 * U[0:n] + U[np.append(np.arange(1, n), [0])]
-    print("original b", b)
-    b[0] = 0
-    print(A)
-    print(b)
-    ddU = solve(A, b) / ((h**2) / 6)
-    print("ddU", ddU)
-    ddU[0] = ddU[-1]
-    n += 1
-    A = ddU[: n - 1] / (6 * h)
-    B = ddU[1:n] / (6 * h)
-    C = U[: n - 1] / h - ddU[: n - 1] * h / 6
-    D = U[1:n] / h - ddU[1:n] * h / 6
 
-    print(len(ddU), len(A), len(B), len(C), len(D))
+    b = U[range(-1, n - 1)] - 2 * U[0:n] + U[np.append(np.arange(1, n), [0])]
+    dd_u = solve(A, b) / ((h**2) / 6)
+    U = np.append(U, U[0])
+    dd_u = np.append(dd_u, dd_u[0])
+
+    n += 1
+    a = dd_u[: n - 1] / (6 * h)
+    b = dd_u[1:n] / (6 * h)
+    c = U[: n - 1] / h - dd_u[: n - 1] * h / 6
+    d = U[1:n] / h - dd_u[1:n] * h / 6
+
     r = X[i + 1] - x
     s = x - X[i]
 
-    return r * (A[i] * r * r + C[i]) + s * (B[i] * s * s + D[i])
+    return r * (a[i] * r * r + c[i]) + s * (b[i] * s * s + d[i])
 
-
-def my_spline(x, h, U):
-    #
-    # -0- Construction des abscisses (y-compris celle qui correspond au retour au point de depart)
-    #     Exemple U = [U_0,U_1,U_2] => n=3 => X = [0,h,2h,3h]
-    #
-    #
-
-    U = np.append(U, U[0])
-    U = np.append(U, U[1])
-    n = np.size(U)
-    X = np.arange(0, n) * h
-    ddU = get_ddU(U, h)
-
-    i = np.zeros(len(x), dtype=int)
-    for j in range(1, n):
-        i[X[j] <= x] = j
-    #
-    # A MODIFIER ..... [begin]
-    # Ici, on renvoie une interpolation linéaire par morceaux :-)
-    # Un peu trop simple non !
-    #
-
-    return (
-        (ddU[i - 1] / (6 * h)) * (X[i] - x) ** 3
-        + (ddU[i] / (6 * h)) * (x - X[i - 1]) ** 3
-        + ((U[i - 1] / h) - (ddU[i - 1] * h / 6)) * (X[i] - x)
-        + ((U[i] / h) - ((ddU[i] * h) / 6)) * (x - X[i - 1])
-    )
-
-
-#
-# A MODIFIER ..... [end]
-#
 
 #
 # FONCTIONS A MODIFIER [end]
