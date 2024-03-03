@@ -53,6 +53,7 @@ def draw(event):
     plt.plot(x, y, "-b")
     X, Y = [], []
     n = 0
+    fig.canvas.draw()
 
 
 # ============================= mainProgram ===============================

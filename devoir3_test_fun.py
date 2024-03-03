@@ -14,6 +14,7 @@
 #
 
 import matplotlib
+from matplotlib.backend_bases import MouseButton
 from matplotlib import pyplot as plt
 from numpy import *
 from devoir3_bspline import bspline
@@ -31,7 +32,8 @@ global X, Y, n
 
 def mouse(event):
     global X, Y, n
-    if event.dblclick:
+    print(event.key)
+    if event.button is MouseButton.RIGHT:
         if n > 2:
             plt.plot([*X, X[0]], [*Y, Y[0]], "--r")
             t = linspace(0, n, n * 1000 + 1)
@@ -51,6 +53,12 @@ def mouse(event):
     fig.canvas.draw()
 
 
+def key(event):
+    if event.key == "r":
+        print(event.key)
+        plt.figure().clear()
+
+
 # ============================= mainProgram ===============================
 
 matplotlib.rcParams["toolbar"] = "None"
@@ -61,6 +69,7 @@ X, Y = [], []
 n = 0
 fig = plt.figure("B-spline approximation : p=3")
 fig.canvas.mpl_connect("button_press_event", mouse)
+fig.canvas.mpl_connect("key_press_event", key)
 plt.ylim((0, 1))
 plt.xlim((0, 1.3))
 plt.axis("off")
