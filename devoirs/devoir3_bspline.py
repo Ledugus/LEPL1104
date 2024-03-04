@@ -48,7 +48,7 @@ def bspline(X, Y, t):
 
 
 def deBoor(
-    k,
+    i,
     x,
     t,
     c,
@@ -57,17 +57,17 @@ def deBoor(
 
     Arguments
     ---------
-    k: Index of knot interval that contains x.
+    i: Index of knot interval that contains x.
     x: Position.
     t: Array of knot positions, needs to be padded as described above.
     c: Array of control points.
     """
     p = 3
-    d = [c[j + k - p] for j in range(0, p + 1)]
+    d = [c[j + i - p] for j in range(0, p + 1)]
 
     for r in range(1, p + 1):
         for j in range(p, r - 1, -1):
-            alpha = (x - t[j + k - p]) / (t[j + 1 + k - r] - t[j + k - p])
+            alpha = (x - t[j + i - p]) / (t[j + 1 + i - r] - t[j + i - p])
             d[j] = (1.0 - alpha) * d[j - 1] + alpha * d[j]
 
     return d[p]
@@ -82,27 +82,23 @@ def deBoor_spline(X, Y, t):
 
     Y = [*Y, *Y[0:p]]
 
-    d = [c[j + k - p] for j in range(0, p + 1)]
+    d_x = array([X[j + i - p] for j in range(0, p + 1)])
 
+    d_y = array([Y[j + i - p] for j in range(0, p + 1)])
     for r in range(1, p + 1):
         for j in range(p, r - 1, -1):
-            alpha = (x - t[j + k - p]) / (t[j + 1 + k - r] - t[j + k - p])
-            d[j] = (1.0 - alpha) * d[j - 1] + alpha * d[j]
+            alpha = (t - T[j + i - p]) / (T[j + 1 + i - r] - T[j + i - p])
+            d_x[j] = (1.0 - alpha) * d_x[j - 1] + alpha * d_x[j]
+            d_y[j] = (1.0 - alpha) * d_y[j - 1] + alpha * d_y[j]
 
-    x = deBoor(i, t, T, X)
-
-    y = deBoor(i, t, T, Y)
-
-    return x, y
+    return d_x[p], d_y[p]
 
 
 #
 # FONCTIONS A MODIFIER [end]
 # ============================================================
-
-
+#
 def main():
-    #
     # -1- Approximation d'un rectangle :-)
     #
 
@@ -111,6 +107,7 @@ def main():
     t = linspace(0, len(X), len(X) * 1000 + 1)
     a = perf_counter()
     x, y = bspline(X, Y, t)
+    x, y = deBoor_spline(X, Y, t)
     #
     # -2- Un joli dessin :-)
     #
