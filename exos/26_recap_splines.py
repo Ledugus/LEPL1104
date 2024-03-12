@@ -85,6 +85,7 @@ def lagrange(t, T, U):
 
 
 def main():
+    """Programme principal,"""
     # initialisation des variables et des points d'observation
     T = arange(0, 4, 1)
     X = array([0, 1, 0])

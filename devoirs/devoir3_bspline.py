@@ -70,6 +70,7 @@ def deBoor(
             alpha = (x - t[j + i - p]) / (t[j + 1 + i - r] - t[j + i - p])
             d[j] = (1.0 - alpha) * d[j - 1] + alpha * d[j]
 
+    print(d[p])
     return d[p]
 
 
@@ -78,13 +79,14 @@ def deBoor_spline(X, Y, t):
     m = len(X)
     T = arange(-p, m + p + 1)
     i = searchsorted(T[1:], t)
-    X = [*X, *X[0:p]]
+    X = array([*X, *X[0:p]])
+    Y = array([*Y, *Y[0:p]])
 
-    Y = [*Y, *Y[0:p]]
-
-    d_x = array([X[j + i - p] for j in range(0, p + 1)])
-
-    d_y = array([Y[j + i - p] for j in range(0, p + 1)])
+    d_x = zeros((p + 1, len(t)))
+    d_y = zeros((p + 1, len(t)))
+    for j in range(0, p + 1):
+        d_x[j] = X[j + i - p]
+        d_y[j] = Y[j + i - p]
     for r in range(1, p + 1):
         for j in range(p, r - 1, -1):
             alpha = (t - T[j + i - p]) / (T[j + 1 + i - r] - T[j + i - p])
@@ -102,12 +104,19 @@ def main():
     # -1- Approximation d'un rectangle :-)
     #
 
-    X = [0, 3, 3, 0]
-    Y = [0, 0, 2, 2]
+    X = array([0, 3, 3, 0])
+    Y = array([0, 0, 2, 2])
     t = linspace(0, len(X), len(X) * 1000 + 1)
+
     a = perf_counter()
-    x, y = bspline(X, Y, t)
-    x, y = deBoor_spline(X, Y, t)
+    for i in range(1000):
+        x, y = bspline(X, Y, t)
+    print(perf_counter() - a)
+
+    a = perf_counter()
+    for i in range(1000):
+        x, y = deBoor_spline(X, Y, t)
+    print(perf_counter() - a)
     #
     # -2- Un joli dessin :-)
     #
