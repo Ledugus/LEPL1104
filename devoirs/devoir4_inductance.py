@@ -41,31 +41,35 @@ import matplotlib.pyplot as plt
 
 
 def inductanceMegneticField(X, Z, Rsource, Zsource, Isource, data):
-    #
-    # A COMPLETER / MODIFIER
-    #
     pi = np.pi
     mu0 = data.mu0
 
     dtheta = 2 * pi / data.nTheta
     x_i = data.Xcircle
     y_i = data.Ycircle
-    dx = -dtheta * y_i
-    dy = dtheta * x_i
 
-    def biot_savart(x, z, rboucle, zboucle, iboucle):
-        distance_cube = np.sqrt((x - x_i) ** 2 + y_i**2 + (z - zboucle) ** 2) ** 3
-        Bx = rboucle * (z - zboucle) * sum(dy / distance_cube)
-        Bz = rboucle * sum((-y_i * dx - (x - x_i) * dy / distance_cube))
+    def biot_savart(x_i, y_i, rboucle, zboucle, iboucle):
+        x_i = x_i * rboucle
+        y_i = y_i * rboucle
+        distance_cube = np.sqrt((X - x_i) ** 2 + y_i**2 + (Z - zboucle) ** 2) ** 3
+        dx_i = -dtheta * y_i
+        dy_i = dtheta * x_i
+        Bx = (Z - zboucle) * dy_i / distance_cube
+        Bz = (-y_i * dx_i - (X - x_i) * dy_i) / distance_cube
         k = mu0 * iboucle / (4 * pi)
         return Bx * k, Bz * k
 
     Bx = np.zeros_like(X)
     Bz = np.zeros_like(Z)
 
-    for i in range(len(X)):
+    for i in range(data.nTheta):
+        # pour chaque boucle
         for rboucle, zsource, isource in zip(Rsource, Zsource, Isource):
-            Bx[i], Bz[i] = biot_savart(X[i], Z[i], rboucle, zsource, isource)
+            # calculer le champ magnétique
+            B_x, B_z = biot_savart(x_i[i], y_i[i], rboucle, zsource, isource)
+            # additionner les contributions
+            Bx += B_x
+            Bz += B_z
 
     return [Bx, Bz]
 
@@ -130,11 +134,24 @@ def inductanceSimpson(X0, Xf, Z0, Zf, n, m):
     #
     # A COMPLETER / MODIFIER
     #
+
     X = linspace(X0, Xf, 2 * n + 1)
     Z = linspace(Z0, Zf, 2 * m + 1)
-    X, Z = meshgrid(X, Z)
     size = (2 * n + 1) * (2 * m + 1)
-    W = ones(size)
+    w_x = [2, 4] * n + [1]
+    w_x[0] = 1
+    w_y = [2, 4] * m + [1]
+    w_y[0] = 1
+    W = zeros(size)
+    m_corr = m if m > 0 else 1
+    for i in range(2 * n + 1):
+        for j in range(2 * m + 1):
+            W[i * (2 * m + 1) + j] = (
+                (2 * np.pi * X[i]) * w_x[i] * w_y[j] / (9 * 4 * m_corr)
+            )
+
+    X, Z = meshgrid(X, Z)
+    print(W)
     return [X.flatten(), Z.flatten(), W]
 
 

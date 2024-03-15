@@ -47,33 +47,6 @@ def bspline(X, Y, t):
     return x, y
 
 
-def deBoor(
-    i,
-    x,
-    t,
-    c,
-):
-    """Evaluates S(x).
-
-    Arguments
-    ---------
-    i: Index of knot interval that contains x.
-    x: Position.
-    t: Array of knot positions, needs to be padded as described above.
-    c: Array of control points.
-    """
-    p = 3
-    d = [c[j + i - p] for j in range(0, p + 1)]
-
-    for r in range(1, p + 1):
-        for j in range(p, r - 1, -1):
-            alpha = (x - t[j + i - p]) / (t[j + 1 + i - r] - t[j + i - p])
-            d[j] = (1.0 - alpha) * d[j - 1] + alpha * d[j]
-
-    print(d[p])
-    return d[p]
-
-
 def deBoor_spline(X, Y, t):
     p = 3
     m = len(X)
@@ -121,7 +94,7 @@ def main():
     # -2- Un joli dessin :-)
     #
 
-    # matplotlib.rcParams["toolbar"] = "None"
+    matplotlib.rcParams["toolbar"] = "None"
     plt.rcParams["figure.facecolor"] = "white"
 
     fig = plt.figure("Approximation avec des B-splines")
