@@ -51,9 +51,9 @@ def inductanceMegneticField(X, Z, Rsource, Zsource, Isource, data):
     def biot_savart(x_i, y_i, rboucle, zboucle, iboucle):
         x_i = x_i * rboucle
         y_i = y_i * rboucle
-        distance_cube = np.sqrt((X - x_i) ** 2 + y_i**2 + (Z - zboucle) ** 2) ** 3
         dx_i = -dtheta * y_i
         dy_i = dtheta * x_i
+        distance_cube = np.sqrt((X - x_i) ** 2 + y_i**2 + (Z - zboucle) ** 2) ** 3
         Bx = (Z - zboucle) * dy_i / distance_cube
         Bz = (-y_i * dx_i - (X - x_i) * dy_i) / distance_cube
         k = mu0 * iboucle / (4 * pi)
@@ -62,10 +62,11 @@ def inductanceMegneticField(X, Z, Rsource, Zsource, Isource, data):
     Bx = np.zeros_like(X)
     Bz = np.zeros_like(Z)
 
-    for i in range(data.nTheta):
-        # pour chaque boucle
-        for rboucle, zsource, isource in zip(Rsource, Zsource, Isource):
-            # calculer le champ magnétique
+    # pour chaque boucle
+    for rboucle, zsource, isource in zip(Rsource, Zsource, Isource):
+        # pour chaque point du cercle discrétisé dans data
+        for i in range(data.nTheta):
+            # calculer le champ magnétique en tout points (X, Z)
             B_x, B_z = biot_savart(x_i[i], y_i[i], rboucle, zsource, isource)
             # additionner les contributions
             Bx += B_x
@@ -94,21 +95,47 @@ def inductanceMegneticField(X, Z, Rsource, Zsource, Isource, data):
 
 
 def inductanceGaussLegendre(X0, Xf, Z0, Zf, n, m, nGaussLegendre):
-    #
-    # A COMPLETER / MODIFIER
-    #
-
+    # on récupère les absisses et poids
     xi, we = roots_legendre(nGaussLegendre)
 
+    # on s'assure que n et m sont non nuls
+    n, m = max(n, 1), max(m, 1)
+
+    # on initialise les tableaux de points et poids
     size = max(n * nGaussLegendre, 1) * max(m * nGaussLegendre, 1)
-    X = Xf * ones(size)
-    Z = Zf * ones(size)
+    xi = (xi + 1) / 2
+    X = zeros(n * nGaussLegendre)
+    Z = zeros(m * nGaussLegendre)
     W = ones(size)
 
-    #
-    # A COMPLETER / MODIFIER
-    #
+    # taille des intervalles d'intégration
+    h_x = (Xf - X0) / n
+    h_z = (Zf - Z0) / m
 
+    # on remplit les tableaux de points, même méthode pour X et Z :
+    # par intervalle, on remplit les nGL points sur cet intervalle
+    for x in range(n):
+        X[x * nGaussLegendre : (x + 1) * nGaussLegendre] = X0 + (x + xi) * h_x
+    for z in range(m):
+        Z[z * nGaussLegendre : (z + 1) * nGaussLegendre] = Z0 + (z + xi) * h_z
+
+    # pour le calcul des poids, on utilise une double boucle qui parcourt les points
+    for x in range(n * nGaussLegendre):
+        for j in range(m * nGaussLegendre):
+            W[j * n * nGaussLegendre + x] = (
+                2
+                * pi
+                * h_x
+                * X[x]
+                * we[x % nGaussLegendre]
+                * we[j % nGaussLegendre]
+                / (4 * m)
+            )
+
+    # même trick que pour Simpson pour "entremêler" les points 1D -> 2D
+    X, Z = meshgrid(X, Z)
+    X = X.flatten()
+    Z = Z.flatten()
     return [X, Z, W]
 
 
@@ -131,27 +158,35 @@ def inductanceGaussLegendre(X0, Xf, Z0, Zf, n, m, nGaussLegendre):
 
 
 def inductanceSimpson(X0, Xf, Z0, Zf, n, m):
-    #
-    # A COMPLETER / MODIFIER
-    #
-
+    # points d'intégration de Simpson
     X = linspace(X0, Xf, 2 * n + 1)
     Z = linspace(Z0, Zf, 2 * m + 1)
-    size = (2 * n + 1) * (2 * m + 1)
-    w_x = [2, 4] * n + [1]
+
+    # taille d'un sous-intervalle
+    h_x = (Xf - X0) / (2 * max(n, 1))
+
+    # Construction des poids unidimensionnels pour Simpson composite sur l'intervalle
+    w_x = array([2, 4] * n + [1])
     w_x[0] = 1
-    w_y = [2, 4] * m + [1]
+    w_y = array([2, 4] * m + [1])
     w_y[0] = 1
+    w_x = w_x / 3
+    w_y = w_y / 3
+
+    # initialisation du tableau des poids
+    size = (2 * n + 1) * (2 * m + 1)
     W = zeros(size)
-    m_corr = m if m > 0 else 1
+
+    # on remplit le tableau des points (1D) comme un tableau 2D en ajustant les indices
     for i in range(2 * n + 1):
         for j in range(2 * m + 1):
-            W[i * (2 * m + 1) + j] = (
-                (2 * np.pi * X[i]) * w_x[i] * w_y[j] / (9 * 4 * m_corr)
+            W[j * (2 * n + 1) + i] = (2 * np.pi * X[i] * h_x * w_x[i] * w_y[j]) / (
+                4 * max(m, 1)
             )
+            # cette formule est donnée dans l'énoncé
 
-    X, Z = meshgrid(X, Z)
-    print(W)
+    # cette fonction retourne des grilles de points 2D, qu'il faut "aplatir" ensuite
+    X, Z = np.meshgrid(X, Z)
     return [X.flatten(), Z.flatten(), W]
 
 
