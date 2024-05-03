@@ -76,7 +76,6 @@ def deBoor_spline(X, Y, t):
 def main():
     # -1- Approximation d'un rectangle :-)
     #
-
     X = array([0, 3, 3, 0])
     Y = array([0, 0, 2, 2])
     t = linspace(0, len(X), len(X) * 1000 + 1)
@@ -106,5 +105,26 @@ def main():
     plt.show()
 
 
+def b_spline_show():
+
+    p = 3
+    X = array([1, 1, 1, 1])
+    Y = array([0, 0, 2, 2])
+    t = linspace(-p, len(X) + p, len(X) * 1000 + 1)
+    m = len(X)
+    T = arange(-p, m + p + 1)
+    n = len(T) - 1
+    for p in range(4):
+        B = zeros((n - p, len(t)))
+        for i in range(0, n - p):
+
+            B[i, :] = b(t, T, i, p)
+            plt.plot(t, B[i, :])
+
+        X = ones(n - p)
+        plt.plot(t, X @ B)
+        plt.show()
+
+
 if __name__ == "__main__":
-    main()
+    b_spline_show()
