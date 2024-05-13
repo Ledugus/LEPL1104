@@ -19,14 +19,14 @@ class MutualInductanceProject:
     mu0 = 4e-7 * pi  # permeabilité du vide en [H/m]
 
     Rcoil = 1.0e-2  # rayon des bobines [m]
-    Hcoil = 1.0e-2  # épaisseur des bobines [m]
-    Zcoil = -0.5e-2  # position verticale de la bobine primaire [m]
+    Hcoil = 1.3e-2  # épaisseur des bobines [m]
+    Zcoil = -Hcoil / 2  # position verticale de la bobine primaire [m]
     nSpires = 200  # nombre de spires
     I = 0.1  # courant dans la bobine [A]
     Hsecond = 2.0e-2  # position relative de la bobine secondaire [m]
 
-    nZcoil = 20  # discrétisation vertical de la bobine
-    nTheta = 8  # discrétisation du cercle
+    nZcoil = 100  # discrétisation vertical de la bobine
+    nTheta = 50  # discrétisation du cercle
     Theta = linspace(0, 2 * pi, nTheta + 1)[:-1] + pi / nTheta
     Xcircle = cos(Theta)
     Ycircle = sin(Theta)
@@ -243,7 +243,7 @@ def main():
     nX = 5
     nZ = 5
     nGL = 3
-    distances = linspace(0, 5e-2, nD)
+    distances = linspace(0, 1e-1, nD)
     M = zeros(nD)
     for i in range(nD):
         h = distances[i] + 0.01
@@ -252,8 +252,25 @@ def main():
         flux = W @ Bz
         M[i] = p.nSpires * (flux / p.I)
 
+    def m_sans_bord(distance):
+        m = 0
+        for x in range(p.nSpires):
+            m += (
+                p.mu0
+                * pi
+                * p.nSpires
+                * p.Rcoil**4
+                / (2 * (p.Rcoil**2 + (distance + x * p.Hcoil / 200) ** 2) ** (3 / 2))
+            )
+        return m
+
+    distances_exp = [0, 1, 2, 3, 4, 5, 6, 10]
+    mutuelles_exp = array([1.89, 1.68, 1.58, 1.56, 1.55, 1.54, 1.535, 1.53])
+    m = m_sans_bord(distances)
     plt.figure("Inductuance mutuelle en fonction de la distance")
     plt.plot(distances * 1e2, M * 1e3, "ob-")
+    plt.plot(distances * 1e2, m * 1e3, "or-")
+    plt.plot(distances_exp, (mutuelles_exp - (0.77 + 0.75)) / 2, "og-")
     ax = plt.gca()
     ax.set_ylabel("Inductance mutuelle : M [mH]")
     ax.set_xlabel("Distance bobines : d [cm]")
