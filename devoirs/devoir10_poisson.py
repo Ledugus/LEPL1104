@@ -39,7 +39,7 @@ def poissonSolve(nCut):
     B = zeros(m)
     for i in range(1, n - 1):
         for j in range(1, n - 1):
-            if i < nCut and j > nCut:
+            if i <= nCut <= j:
                 continue
             index = i + j * n
             A[index, index] = 4
