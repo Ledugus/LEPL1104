@@ -25,6 +25,12 @@ from numpy import *
 
 
 def f(u, beta, gamma):
+    """
+    Retourne f(u) = u'(t) selon les paramêtres beta et gamma :
+    dSdt(t) = - beta*S(i)*I(t)
+    dIdt(t) =   beta*S(i)*I(t) - gamma*I(t)
+    dRdt(t) =                  + gamma*I(t)
+    """
     dSdt = -beta * u[0] * u[1]
     dIdt = beta * u[0] * u[1] - gamma * u[1]
     dRdt = gamma * u[1]
@@ -42,11 +48,11 @@ def epidemicEuler(Xstart, Xend, Ustart, n, beta, gamma):
     U = zeros((n + 1, 3))
     U[0] = Ustart
     h = (Xend - Xstart) / n
+    # A chaque pas de temps
     for i in range(n):
+        # Calculer la valeur suivante en approximant par Taylor à l'ordre 1
         U[i + 1] = U[i] + h * f(U[i], beta, gamma)
-    #
-    # A MODIFIER ..... [end]
-    #
+
     return X, U
 
 
@@ -58,18 +64,20 @@ def epidemicEuler(Xstart, Xend, Ustart, n, beta, gamma):
 
 def epidemicTaylor(Xstart, Xend, Ustart, n, beta, gamma):
     X = linspace(Xstart, Xend, n + 1)
-
-    #
-    # A MODIFIER ..... [begin]
-    #
     U = zeros((n + 1, 3))
     U[0] = Ustart
     h = (Xend - Xstart) / n
 
+    # A chaque pas de temps
     for i in range(n):
+        # u = vecteurs des inconnues au temps i
         u = U[i, :]
+        # F = u', vecteur des dérivées au temps i
         F = f(u, beta, gamma)
+        # k1, k2, k3, quantité fréquemment rencontrée dans le calcul des dérivées (différent des K de Runge-Kutta)
+        # k1 = beta * (S'I + S I')
         k1 = beta * (F[0] * u[1] + u[0] * F[1])
+        # dF = F' = u'', vecteur des dérivées secondes de u (S'', I'', R'')
         dF = array(
             [
                 -k1,
@@ -78,6 +86,8 @@ def epidemicTaylor(Xstart, Xend, Ustart, n, beta, gamma):
             ]
         )
         k2 = beta * (dF[0] * u[1] + 2 * F[1] * F[0] + u[0] * dF[1])
+
+        # ddF = dF' = F'' = u''', vecteur des dérivées troisièmes de u (S''', I''', R''')
         ddF = array(
             [
                 -k2,
@@ -88,14 +98,13 @@ def epidemicTaylor(Xstart, Xend, Ustart, n, beta, gamma):
         k3 = beta * (
             ddF[0] * u[1] + 3 * dF[1] * F[0] + 3 * F[1] * dF[0] + u[0] * ddF[1]
         )
+        # dddF = ddF' = dF'' = F'''= u'''', vecteur des dérivées quatrièmes de u
         dddF = array([-k3, k3 - gamma * ddF[1], gamma * ddF[1]])
 
+        # Application de la formule de Taylor à l'ordre 4
         U[i + 1, :] = (
-            U[i, :] + h * F + h**2 * dF / 2 + h**3 * ddF / 6 + h**4 * dddF / 24
+            U[i, :] + (h * F) + (h**2 * dF / 2) + (h**3 * ddF / 6) + (h**4 * dddF / 24)
         )
-    #
-    # A MODIFIER ..... [end]
-    #
 
     return X, U
 
@@ -107,23 +116,19 @@ def epidemicTaylor(Xstart, Xend, Ustart, n, beta, gamma):
 
 
 def epidemicRungeKutta(Xstart, Xend, Ustart, n, beta, gamma):
-    X = linspace(Xstart, Xend, n + 1)
 
-    #
-    # A MODIFIER ..... [begin]
-    #
+    X = linspace(Xstart, Xend, n + 1)
     U = zeros((n + 1, 3))
     U[0] = Ustart
     h = (Xend - Xstart) / n
+
     for i in range(n):
         k1 = h * f(U[i], beta, gamma)
         k2 = h * f(U[i] + 0.5 * k1, beta, gamma)
         k3 = h * f(U[i] + 0.5 * k2, beta, gamma)
         k4 = h * f(U[i] + k3, beta, gamma)
         U[i + 1] = U[i] + (k1 + 2 * k2 + 2 * k3 + k4) / 6
-    #
-    # A MODIFIER ..... [end]
-    #
+
     return X, U
 
 
